@@ -1,6 +1,6 @@
 <template>
   <div class="login-container">
-    <q-card class="card-modern q-pa-lg" style="max-width: 500px; width: 30vw">
+    <q-card class="card-modern q-pa-lg">
       <q-tabs
         v-model="tab"
         class="q-mb-lg"
@@ -106,7 +106,7 @@ async function submit(e) {
   justify-content: center;
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 16px;
+  padding: clamp(8px, 5vw, 16px);
 }
 
 .card-modern {
@@ -114,6 +114,7 @@ async function submit(e) {
   box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
+  width: clamp(300px, 95vw, 500px);
 }
 
 .card-modern:hover {
@@ -135,8 +136,8 @@ async function submit(e) {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 50%;
-  height: 60px;
+  min-width: clamp(150px, 100%, 300px);
+  min-height: clamp(40px, 10vw, 60px);
 }
 
 .btn-modern:hover {

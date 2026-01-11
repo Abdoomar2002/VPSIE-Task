@@ -91,7 +91,7 @@ async function submit(e) {
   justify-content: center;
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 16px;
+  padding: clamp(8px, 5vw, 16px);
 }
 
 .card-modern {
@@ -99,6 +99,7 @@ async function submit(e) {
   box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
+  width: clamp(300px, 95vw, 500px);
 }
 
 .card-modern:hover {

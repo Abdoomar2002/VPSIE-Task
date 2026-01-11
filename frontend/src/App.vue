@@ -1,23 +1,23 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-header class="header-gradient text-white">
-      <q-toolbar class="q-pa-md">
+      <q-toolbar class="q-pa-md navbar-toolbar">
         <q-toolbar-title>
           <span class="row items-center q-gutter-sm">
             <q-icon name="task" size="md" />
-            <span class="text-h5 font-weight-bold">Task Manager</span>
+            <span class="app-title">Task Manager</span>
           </span>
         </q-toolbar-title>
         <q-space />
-        <div v-if="token" class="row q-gutter-md items-center">
-          <q-tabs class="text-white">
+        <div v-if="token" class="row q-gutter-md items-center navbar-content">
+          <q-tabs class="text-white tabs-container">
             <q-route-tab
               name="tasks"
               label="Tasks"
               icon="task_alt"
               to="/tasks"
               exact
-              class="tab-modern"
+              class="tab-modern tab-label"
             />
             <q-route-tab
               name="archived"
@@ -25,10 +25,14 @@
               icon="inventory_2"
               to="/archived"
               exact
-              class="tab-modern"
+              class="tab-modern tab-label"
             />
           </q-tabs>
-          <q-separator vertical class="q-mx-md" color="white" />
+          <q-separator
+            vertical
+            class="q-mx-md separator-visible"
+            color="white"
+          />
           <q-btn
             round
             dense
@@ -44,7 +48,7 @@
             label="Logout"
             icon="logout"
             @click="logout"
-            class="btn-modern q-pa-md transition-all"
+            class="btn-modern q-pa-md transition-all btn-logout"
           />
         </div>
       </q-toolbar>
@@ -92,6 +96,15 @@ function logout() {
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
+.navbar-toolbar {
+  padding: clamp(12px, 3vw, 16px) !important;
+}
+
+.app-title {
+  font-size: clamp(1.2rem, 4vw, 1.5rem);
+  font-weight: bold;
+}
+
 .tab-modern {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -121,8 +134,63 @@ function logout() {
 .btn-modern :deep(.q-icon) {
   font-size: 20px;
 }
+
 .tab-modern :deep(.q-tab__icon) {
   font-size: 20px;
+}
+
+/* Responsive navbar */
+@media (max-width: 768px) {
+  .navbar-content {
+    gap: clamp(8px, 2vw, 16px) !important;
+  }
+
+  .tabs-container :deep(.q-tab) {
+    padding: 8px 4px !important;
+    min-height: 44px;
+  }
+
+  .tab-label :deep(.q-tab__label) {
+    display: none;
+  }
+
+  .tab-label :deep(.q-tab__icon) {
+    margin-right: 0;
+  }
+
+  .separator-visible {
+    display: none;
+  }
+
+  .btn-logout :deep(.q-btn__content) {
+    flex-direction: column;
+  }
+
+  .btn-logout :deep(.q-icon) {
+    margin-right: 0 !important;
+  }
+
+  .btn-logout :deep(.q-btn__label) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-toolbar {
+    padding: clamp(8px, 2vw, 12px) !important;
+  }
+
+  .app-title {
+    display: none;
+  }
+
+  .navbar-content {
+    gap: 4px !important;
+  }
+
+  .tabs-container :deep(.q-tab) {
+    padding: 6px 3px !important;
+  }
 }
 </style>
 
