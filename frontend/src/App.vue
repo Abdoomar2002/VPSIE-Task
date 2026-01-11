@@ -1,378 +1,210 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header class="bg-primary text-white">
-      <q-toolbar>
+    <q-header class="header-gradient text-white">
+      <q-toolbar class="q-pa-md">
         <q-toolbar-title>
-          <span class="row items-center q-gutter-xs">
+          <span class="row items-center q-gutter-sm">
             <q-icon name="task" size="md" />
-            <span>Task Manager</span>
+            <span class="text-h5 font-weight-bold">Task Manager</span>
           </span>
         </q-toolbar-title>
-        <div v-if="token">
-          <q-btn flat dense label="Logout" icon="logout" @click="logout" />
+        <q-space />
+        <div v-if="token" class="row q-gutter-md items-center">
+          <q-tabs class="text-white">
+            <q-route-tab
+              name="tasks"
+              label="Tasks"
+              icon="task_alt"
+              to="/tasks"
+              exact
+              class="tab-modern"
+            />
+            <q-route-tab
+              name="archived"
+              label="Archived"
+              icon="inventory_2"
+              to="/archived"
+              exact
+              class="tab-modern"
+            />
+          </q-tabs>
+          <q-separator vertical class="q-mx-md" color="white" />
+          <q-btn
+            round
+            dense
+            flat
+            :icon="$q.dark.isActive ? 'light_mode' : 'dark_mode'"
+            @click="$q.dark.toggle()"
+            class="btn-modern transition-all"
+            size="md"
+          />
+          <q-btn
+            round
+            outline
+            label="Logout"
+            icon="logout"
+            @click="logout"
+            class="btn-modern q-pa-md transition-all"
+          />
         </div>
       </q-toolbar>
     </q-header>
 
     <q-page-container>
-      <q-page padding>
-        <div v-if="!token">
-          <login-form @authed="onAuthed" />
-        </div>
-        <div v-else>
-          <q-card class="q-pa-md q-mb-md">
-            <q-form @submit="createTask" class="row q-col-gutter-md">
-              <div class="col-12 col-md-4">
-                <q-input
-                  v-model="newTask.title"
-                  label="Title"
-                  prepend-icon="label"
-                  :disable="loading"
-                />
-              </div>
-              <div class="col-12 col-md-6">
-                <q-input
-                  v-model="newTask.description"
-                  label="Description"
-                  prepend-icon="notes"
-                  :disable="loading"
-                  type="textarea"
-                />
-              </div>
-              <div class="col-12 col-md-2">
-                <q-select
-                  v-model="newTask.status"
-                  :options="statusOptions"
-                  label="Status"
-                  prepend-icon="flag"
-                  :disable="loading"
-                />
-              </div>
-              <div class="col-12">
-                <q-btn
-                  color="primary"
-                  label="Add Task"
-                  icon="add_circle"
-                  type="submit"
-                  :loading="loading"
-                />
-              </div>
-            </q-form>
-            <div v-if="error" class="text-negative q-mt-sm">{{ error }}</div>
-          </q-card>
-          <q-card class="q-pa-md q-mb-md">
-            <div class="row q-col-gutter-md items-end">
-              <div class="col-12 col-md-6">
-                <q-input
-                  v-model="searchTerm"
-                  label="Search by title or description"
-                  prepend-icon="search"
-                  clearable
-                  :disable="loading"
-                />
-              </div>
-              <div class="col-12 col-md-3">
-                <q-select
-                  v-model="statusFilter"
-                  :options="statusFilterOptions"
-                  label="Filter by status"
-                  prepend-icon="filter_list"
-                  emit-value
-                  map-options
-                  :disable="loading"
-                />
-              </div>
-              <div class="col-12 col-md-3 flex justify-end q-gutter-sm">
-                <q-btn
-                  color="primary"
-                  label="Apply"
-                  icon="tune"
-                  @click="fetchTasks"
-                  :loading="loading"
-                />
-                <q-btn
-                  flat
-                  label="Clear"
-                  icon="close"
-                  @click="clearFilters"
-                  :disable="loading"
-                />
-              </div>
-            </div>
-          </q-card>
-          <q-card>
-            <q-card-section class="row items-center">
-              <div class="text-h6">Your Tasks</div>
-              <q-space />
-              <q-btn
-                flat
-                icon="refresh"
-                @click="fetchTasks"
-                :disable="loading"
-              />
-            </q-card-section>
-            <q-separator />
-            <q-card-section>
-              <div v-if="loading" class="row justify-center q-pa-lg">
-                <q-spinner size="32px" color="primary" />
-              </div>
-              <div v-else>
-                <q-table :rows="tasks" :columns="columns" row-key="id">
-                  <template #body-cell-actions="props">
-                    <q-td align="right">
-                      <q-btn
-                        dense
-                        color="primary"
-                        label="Edit"
-                        icon="edit"
-                        @click="editTask(props.row)"
-                        class="q-mr-sm"
-                      />
-                      <q-btn
-                        dense
-                        color="negative"
-                        label="Delete"
-                        icon="delete"
-                        @click="deleteTask(props.row.id)"
-                      />
-                    </q-td>
-                  </template>
-                </q-table>
-              </div>
-              <div v-if="listError" class="text-negative q-mt-sm">
-                {{ listError }}
-              </div>
-            </q-card-section>
-          </q-card>
-
-          <q-dialog v-model="editDialog">
-            <q-card style="min-width: 350px">
-              <q-card-section class="text-h6">Edit Task</q-card-section>
-              <q-card-section>
-                <q-input
-                  v-model="editItem.title"
-                  label="Title"
-                  prepend-icon="label"
-                />
-                <q-input
-                  v-model="editItem.description"
-                  label="Description"
-                  prepend-icon="notes"
-                  type="textarea"
-                />
-                <q-select
-                  v-model="editItem.status"
-                  :options="statusOptions"
-                  prepend-icon="flag"
-                  label="Status"
-                />
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Cancel" icon="close" v-close-popup />
-                <q-btn
-                  color="primary"
-                  label="Save"
-                  icon="save"
-                  @click="updateTask"
-                />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-        </div>
-
-        <q-separator class="q-my-lg" />
-
-        <q-card>
-          <q-card-section class="row items-center">
-            <div class="text-h6">Archived Tasks</div>
-            <q-space />
-            <q-btn
-              flat
-              icon="inventory_2"
-              label="Load"
-              @click="fetchArchived"
-              :loading="archivedLoading"
-            />
-          </q-card-section>
-          <q-separator />
-          <q-card-section>
-            <div v-if="archivedLoading" class="row justify-center q-pa-lg">
-              <q-spinner size="32px" color="primary" />
-            </div>
-            <div v-else-if="archived.length === 0">
-              <div class="text-grey">No archived tasks yet.</div>
-            </div>
-            <div v-else>
-              <q-table :rows="archived" :columns="columns" row-key="id">
-                <template #body-cell-actions="props">
-                  <q-td align="right">
-                    <q-btn
-                      dense
-                      color="grey"
-                      icon="inventory_2"
-                      label="Archived"
-                      flat
-                      disable
-                    />
-                  </q-td>
-                </template>
-              </q-table>
-            </div>
-            <div v-if="archivedError" class="text-negative q-mt-sm">
-              {{ archivedError }}
-            </div>
-          </q-card-section>
-        </q-card>
-      </q-page>
+      <router-view />
     </q-page-container>
   </q-layout>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import api from "./api";
-import LoginForm from "./components/LoginForm.vue";
+import { ref, onMounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 
+const router = useRouter();
+const route = useRoute();
 const token = ref(localStorage.getItem("token"));
-const tasks = ref([]);
-const archived = ref([]);
-const loading = ref(false);
-const archivedLoading = ref(false);
-const error = ref("");
-const listError = ref("");
-const archivedError = ref("");
-const searchTerm = ref("");
-const statusFilter = ref("all");
-const newTask = ref({ title: "", description: "", status: "todo" });
-const editDialog = ref(false);
-const editItem = ref({ id: null, title: "", description: "", status: "todo" });
-const statusOptions = ["todo", "in_progress", "done"];
-const statusFilterOptions = [
-  { label: "All", value: "all" },
-  { label: "To do", value: "todo" },
-  { label: "In progress", value: "in_progress" },
-  { label: "Done", value: "done" },
-];
 
-const columns = [
-  { name: "title", label: "Title", field: "title" },
-  { name: "description", label: "Description", field: "description" },
-  { name: "status", label: "Status", field: "status" },
-  { name: "actions", label: "Actions", field: "actions" },
-];
+// Watch for storage changes from other tabs/windows
+onMounted(() => {
+  window.addEventListener("storage", handleStorageChange);
+  // Also trigger a check when the router updates
+  router.afterEach(() => {
+    token.value = localStorage.getItem("token");
+  });
+});
 
-function onAuthed(t) {
-  localStorage.setItem("token", t);
-  token.value = t;
-  fetchTasks();
+function handleStorageChange(e) {
+  if (e.key === "token") {
+    token.value = e.newValue;
+  }
 }
 
 function logout() {
   localStorage.removeItem("token");
   token.value = null;
-  tasks.value = [];
+  router.push("/login");
 }
-
-async function fetchTasks() {
-  listError.value = "";
-  loading.value = true;
-  try {
-    const params = {};
-    const q = searchTerm.value?.trim();
-    if (q) params.q = q;
-    if (statusFilter.value && statusFilter.value !== "all") {
-      params.status = statusFilter.value;
-    }
-    const { data } = await api.get("/tasks", { params });
-    tasks.value = data;
-  } catch (e) {
-    listError.value = e?.response?.data?.error || e.message;
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function fetchArchived() {
-  archivedError.value = "";
-  archivedLoading.value = true;
-  try {
-    const params = {};
-    const q = searchTerm.value?.trim();
-    if (q) params.q = q;
-    if (statusFilter.value && statusFilter.value !== "all") {
-      params.status = statusFilter.value;
-    }
-    const { data } = await api.get("/tasks/archive", { params });
-    archived.value = data;
-  } catch (e) {
-    archivedError.value = e?.response?.data?.error || e.message;
-  } finally {
-    archivedLoading.value = false;
-  }
-}
-
-function clearFilters() {
-  searchTerm.value = "";
-  statusFilter.value = "all";
-  fetchTasks();
-}
-
-async function createTask(e) {
-  e?.preventDefault?.();
-  error.value = "";
-  loading.value = true;
-  try {
-    if (!newTask.value.title) throw new Error("Title is required");
-    await api.post("/tasks", newTask.value);
-    await fetchTasks();
-    newTask.value = { title: "", description: "", status: "todo" };
-  } catch (e2) {
-    error.value = e2?.response?.data?.error || e2.message;
-  } finally {
-    loading.value = false;
-  }
-}
-
-function editTask(row) {
-  editItem.value = { ...row };
-  editDialog.value = true;
-}
-
-async function updateTask() {
-  try {
-    const { id, title, description, status } = editItem.value;
-    const { data } = await api.put(`/tasks/${id}`, {
-      title,
-      description,
-      status,
-    });
-    const idx = tasks.value.findIndex((t) => t.id === id);
-    if (idx >= 0) tasks.value[idx] = data;
-    editDialog.value = false;
-  } catch (e) {
-    listError.value = e?.response?.data?.error || e.message;
-  }
-}
-
-async function deleteTask(id) {
-  try {
-    const { data } = await api.delete(`/tasks/${id}`);
-    tasks.value = tasks.value.filter((t) => t.id !== id);
-    if (data) archived.value.unshift(data);
-  } catch (e) {
-    listError.value = e?.response?.data?.error || e.message;
-  }
-}
-
-onMounted(() => {
-  if (token.value) fetchTasks();
-});
 </script>
 
-<style>
+<style scoped>
+.header-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.tab-modern {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-modern:hover {
+  transform: translateY(-2px);
+}
+
+.btn-modern {
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Normalize icon sizes inside modern buttons and tabs */
+.btn-modern :deep(.q-icon) {
+  font-size: 20px;
+}
+.tab-modern :deep(.q-tab__icon) {
+  font-size: 20px;
+}
+</style>
+
+<style scoped>
 html,
 body,
 #app {
   height: 100%;
+}
+
+.header-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.card-modern {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+}
+
+.card-modern:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.input-modern :deep(.q-field__control) {
+  border-radius: 12px;
+}
+
+.input-modern :deep(.q-field__native),
+.input-modern :deep(.q-field__textarea) {
+  border-radius: 12px;
+}
+
+.btn-modern {
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.1);
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.table-modern :deep(thead tr),
+.table-modern :deep(tbody tr) {
+  transition: background-color 0.2s;
+}
+
+.table-modern :deep(tbody tr:hover) {
+  background-color: rgba(102, 126, 234, 0.05);
+}
+
+.chip-modern {
+  border-radius: 12px;
+  font-weight: 600;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="login-container">
-    <q-card class="card-modern q-pa-lg" style="max-width: 500px">
+    <q-card class="card-modern q-pa-lg" style="max-width: 500px; width: 30vw">
       <q-tabs
         v-model="tab"
         class="q-mb-lg"
@@ -12,7 +12,10 @@
         <q-tab name="login" label="Login" icon="login" />
         <q-tab name="signup" label="Sign Up" icon="person_add" />
       </q-tabs>
-      <q-form @submit="submit" class="q-col-gutter-lg">
+      <q-form
+        @submit="submit"
+        class="q-col-gutter-lg justify-center items-center"
+      >
         <q-input
           v-model="email"
           label="Email Address"
@@ -35,16 +38,17 @@
           :disable="loading"
           class="input-modern"
         />
-        <q-btn
-          color="primary"
-          type="submit"
-          :label="tab === 'login' ? 'Login' : 'Create Account'"
-          :icon="tab === 'login' ? 'login' : 'person_add'"
-          :loading="loading"
-          round
-          size="lg"
-          class="btn-modern full-width transition-all"
-        />
+        <div class="col-12 text-center">
+          <q-btn
+            color="primary"
+            type="submit"
+            :label="tab === 'login' ? 'Login' : 'Create Account'"
+            :icon="tab === 'login' ? 'login' : 'person_add'"
+            :loading="loading"
+            round
+            class="btn-modern transition-all"
+          />
+        </div>
       </q-form>
       <div v-if="error" class="text-negative q-mt-lg text-center animate-pulse">
         <q-icon name="error" class="q-mr-sm" />
@@ -56,9 +60,10 @@
 
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import api from "../api";
 
-const emit = defineEmits(["authed"]);
+const router = useRouter();
 const tab = ref("login");
 const email = ref("");
 const password = ref("");
@@ -75,7 +80,17 @@ async function submit(e) {
       email: email.value,
       password: password.value,
     });
-    emit("authed", data.token);
+    localStorage.setItem("token", data.token);
+    // Trigger storage event for other listeners (like App.vue)
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: "token",
+        newValue: data.token,
+        oldValue: null,
+        storageArea: localStorage,
+      })
+    );
+    router.push("/tasks");
   } catch (e2) {
     error.value = e2?.response?.data?.error || e2.message;
   } finally {
@@ -120,6 +135,8 @@ async function submit(e) {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 50%;
+  height: 60px;
 }
 
 .btn-modern:hover {
@@ -143,5 +160,10 @@ async function submit(e) {
   50% {
     opacity: 0.7;
   }
+}
+
+/* Normalize icon sizes inside modern buttons */
+.btn-modern :deep(.q-icon) {
+  font-size: 20px;
 }
 </style>
