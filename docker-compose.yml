@@ -1,25 +1,31 @@
 version: "3.8"
 services:
-  # frontend:
-  #   image: node:14
-  #   working_dir: /app
-  #   volumes:
-  #     - ./frontend:/app
-  #   command: sh -c "npm install && npm audit fix --force && npm run dev"
-  #   ports:
-  #     - "5173:3000"
-  #   depends_on:
-  #     - backend
-  # backend:
-  # image: node:14
-  # working_dir: /app
-  # volumes:
-  #   - ./backend:/app
-  # command: sh -c "npm install  && npm run dev"
-  # ports:
-  #   - "5000:5000"
-  # depends_on:
-  #   - mysql
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://backend:4000/api
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mysql
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASS=example
+      - DB_NAME=tasks_db
+      - DB_PORT=3306
+
   mysql:
     image: mysql:8.0
     environment:
