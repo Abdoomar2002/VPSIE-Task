@@ -1,10 +1,62 @@
 import { createApp } from "vue";
-import { Quasar } from "quasar";
+import {
+  Quasar,
+  QLayout,
+  QHeader,
+  QToolbar,
+  QToolbarTitle,
+  QBtn,
+  QPage,
+  QPageContainer,
+  QCard,
+  QForm,
+  QInput,
+  QSelect,
+  QCardSection,
+  QSeparator,
+  QSpinner,
+  QTd,
+  QTable,
+  QCardActions,
+  QDialog,
+  QSpace,
+  QTabs,
+  QTab,
+  ClosePopup,
+} from "quasar";
 import App from "./App.vue";
-import "quasar/src/css/index.sass";
+import "quasar/dist/quasar.css";
 import "@quasar/extras/roboto-font/roboto-font.css";
 import "@quasar/extras/material-icons/material-icons.css";
 
 const app = createApp(App);
-app.use(Quasar, { plugins: {} });
+app.use(Quasar, {
+  components: {
+    QLayout,
+    QHeader,
+    QToolbar,
+    QToolbarTitle,
+    QBtn,
+    QPage,
+    QPageContainer,
+    QCard,
+    QForm,
+    QInput,
+    QSelect,
+    QCardSection,
+    QSeparator,
+    QSpinner,
+    QTd,
+    QTable,
+    QCardActions,
+    QDialog,
+    QSpace,
+    QTabs,
+    QTab,
+  },
+  directives: {
+    ClosePopup,
+  },
+  plugins: {},
+});
 app.mount("#app");

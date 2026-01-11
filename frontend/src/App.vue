@@ -2,116 +2,176 @@
   <q-layout view="lHh Lpr lFf">
     <q-header class="bg-primary text-white">
       <q-toolbar>
-        <q-toolbar-title>Task Manager</q-toolbar-title>
+        <q-toolbar-title>
+          <span class="row items-center q-gutter-xs">
+            <q-icon name="task" size="md" />
+            <span>Task Manager</span>
+          </span>
+        </q-toolbar-title>
         <div v-if="token">
-          <q-btn flat dense label="Logout" @click="logout" />
+          <q-btn flat dense label="Logout" icon="logout" @click="logout" />
         </div>
       </q-toolbar>
     </q-header>
-    <q-page padding>
-      <div v-if="!token">
-        <login-form @authed="onAuthed" />
-      </div>
-      <div v-else>
-        <q-card class="q-pa-md q-mb-md">
-          <q-form @submit="createTask" class="row q-col-gutter-md">
-            <div class="col-12 col-md-4">
-              <q-input
-                v-model="newTask.title"
-                label="Title"
-                :disable="loading"
-              />
+
+    <q-page-container>
+      <q-page padding>
+        <div v-if="!token">
+          <login-form @authed="onAuthed" />
+        </div>
+        <div v-else>
+          <q-card class="q-pa-md q-mb-md">
+            <q-form @submit="createTask" class="row q-col-gutter-md">
+              <div class="col-12 col-md-4">
+                <q-input
+                  v-model="newTask.title"
+                  label="Title"
+                  prepend-icon="label"
+                  :disable="loading"
+                />
+              </div>
+              <div class="col-12 col-md-6">
+                <q-input
+                  v-model="newTask.description"
+                  label="Description"
+                  prepend-icon="notes"
+                  :disable="loading"
+                  type="textarea"
+                />
+              </div>
+              <div class="col-12 col-md-2">
+                <q-select
+                  v-model="newTask.status"
+                  :options="statusOptions"
+                  label="Status"
+                  prepend-icon="flag"
+                  :disable="loading"
+                />
+              </div>
+              <div class="col-12">
+                <q-btn
+                  color="primary"
+                  label="Add Task"
+                  icon="add_circle"
+                  type="submit"
+                  :loading="loading"
+                />
+              </div>
+            </q-form>
+            <div v-if="error" class="text-negative q-mt-sm">{{ error }}</div>
+          </q-card>
+          <q-card class="q-pa-md q-mb-md">
+            <div class="row q-col-gutter-md items-end">
+              <div class="col-12 col-md-6">
+                <q-input
+                  v-model="searchTerm"
+                  label="Search by title or description"
+                  prepend-icon="search"
+                  clearable
+                  :disable="loading"
+                />
+              </div>
+              <div class="col-12 col-md-3">
+                <q-select
+                  v-model="statusFilter"
+                  :options="statusFilterOptions"
+                  label="Filter by status"
+                  prepend-icon="filter_list"
+                  emit-value
+                  map-options
+                  :disable="loading"
+                />
+              </div>
+              <div class="col-12 col-md-3 flex justify-end q-gutter-sm">
+                <q-btn
+                  color="primary"
+                  label="Apply"
+                  icon="tune"
+                  @click="fetchTasks"
+                  :loading="loading"
+                />
+                <q-btn
+                  flat
+                  label="Clear"
+                  icon="close"
+                  @click="clearFilters"
+                  :disable="loading"
+                />
+              </div>
             </div>
-            <div class="col-12 col-md-6">
-              <q-input
-                v-model="newTask.description"
-                label="Description"
-                :disable="loading"
-                type="textarea"
-              />
-            </div>
-            <div class="col-12 col-md-2">
-              <q-select
-                v-model="newTask.status"
-                :options="statusOptions"
-                label="Status"
-                :disable="loading"
-              />
-            </div>
-            <div class="col-12">
+          </q-card>
+          <q-card>
+            <q-card-section class="row items-center">
+              <div class="text-h6">Your Tasks</div>
+              <q-space />
               <q-btn
-                color="primary"
-                label="Add Task"
-                type="submit"
-                :loading="loading"
-              />
-            </div>
-          </q-form>
-          <div v-if="error" class="text-negative q-mt-sm">{{ error }}</div>
-        </q-card>
-
-        <q-card>
-          <q-card-section class="row items-center">
-            <div class="text-h6">Your Tasks</div>
-            <q-space />
-            <q-btn flat icon="refresh" @click="fetchTasks" :disable="loading" />
-          </q-card-section>
-          <q-separator />
-          <q-card-section>
-            <div v-if="loading" class="row justify-center q-pa-lg">
-              <q-spinner size="32px" color="primary" />
-            </div>
-            <div v-else>
-              <q-table :rows="tasks" :columns="columns" row-key="id">
-                <template #body-cell-actions="props">
-                  <q-td align="right">
-                    <q-btn
-                      dense
-                      color="primary"
-                      label="Edit"
-                      @click="editTask(props.row)"
-                      class="q-mr-sm"
-                    />
-                    <q-btn
-                      dense
-                      color="negative"
-                      label="Delete"
-                      @click="deleteTask(props.row.id)"
-                    />
-                  </q-td>
-                </template>
-              </q-table>
-            </div>
-            <div v-if="listError" class="text-negative q-mt-sm">
-              {{ listError }}
-            </div>
-          </q-card-section>
-        </q-card>
-
-        <q-dialog v-model="editDialog">
-          <q-card style="min-width: 350px">
-            <q-card-section class="text-h6">Edit Task</q-card-section>
-            <q-card-section>
-              <q-input v-model="editItem.title" label="Title" />
-              <q-input
-                v-model="editItem.description"
-                label="Description"
-                type="textarea"
-              />
-              <q-select
-                v-model="editItem.status"
-                :options="statusOptions"
-                label="Status"
+                flat
+                icon="refresh"
+                @click="fetchTasks"
+                :disable="loading"
               />
             </q-card-section>
-            <q-card-actions align="right">
-              <q-btn flat label="Cancel" v-close-popup />
-              <q-btn color="primary" label="Save" @click="updateTask" />
-            </q-card-actions>
+            <q-separator />
+            <q-card-section>
+              <div v-if="loading" class="row justify-center q-pa-lg">
+                <q-spinner size="32px" color="primary" />
+              </div>
+              <div v-else>
+                <q-table :rows="tasks" :columns="columns" row-key="id">
+                  <template #body-cell-actions="props">
+                    <q-td align="right">
+                      <q-btn
+                        dense
+                        color="primary"
+                        label="Edit"
+                        icon="edit"
+                        @click="editTask(props.row)"
+                        class="q-mr-sm"
+                      />
+                      <q-btn
+                        dense
+                        color="negative"
+                        label="Delete"
+                        icon="delete"
+                        @click="deleteTask(props.row.id)"
+                      />
+                    </q-td>
+                  </template>
+                </q-table>
+              </div>
+              <div v-if="listError" class="text-negative q-mt-sm">
+                {{ listError }}
+              </div>
+            </q-card-section>
           </q-card>
-        </q-dialog>
-      </div>
-    </q-page>
+
+          <q-dialog v-model="editDialog">
+            <q-card style="min-width: 350px">
+              <q-card-section class="text-h6">Edit Task</q-card-section>
+              <q-card-section>
+                <q-input v-model="editItem.title" label="Title" prepend-icon="label" />
+                <q-input
+                  v-model="editItem.description"
+                  label="Description"
+                  prepend-icon="notes"
+                  type="textarea"
+                />
+                <q-select
+                  v-model="editItem.status"
+                  :options="statusOptions"
+                  prepend-icon="flag"
+                  label="Status"
+                />
+              </q-card-section>
+              <q-card-actions align="right">
+                <q-btn flat label="Cancel" icon="close" v-close-popup />
+                <q-btn color="primary" label="Save" icon="save" @click="updateTask" />
+              </q-card-actions>
+            </q-card>
+          </q-dialog>
+        </div>
+      </q-page>
+    </q-page-container>
   </q-layout>
 </template>
 
@@ -125,10 +185,18 @@ const tasks = ref([]);
 const loading = ref(false);
 const error = ref("");
 const listError = ref("");
+const searchTerm = ref("");
+const statusFilter = ref("all");
 const newTask = ref({ title: "", description: "", status: "todo" });
 const editDialog = ref(false);
 const editItem = ref({ id: null, title: "", description: "", status: "todo" });
 const statusOptions = ["todo", "in_progress", "done"];
+const statusFilterOptions = [
+  { label: "All", value: "all" },
+  { label: "To do", value: "todo" },
+  { label: "In progress", value: "in_progress" },
+  { label: "Done", value: "done" },
+];
 
 const columns = [
   { name: "title", label: "Title", field: "title" },
@@ -153,7 +221,13 @@ async function fetchTasks() {
   listError.value = "";
   loading.value = true;
   try {
-    const { data } = await api.get("/tasks");
+    const params = {};
+    const q = searchTerm.value?.trim();
+    if (q) params.q = q;
+    if (statusFilter.value && statusFilter.value !== "all") {
+      params.status = statusFilter.value;
+    }
+    const { data } = await api.get("/tasks", { params });
     tasks.value = data;
   } catch (e) {
     listError.value = e?.response?.data?.error || e.message;
@@ -162,14 +236,20 @@ async function fetchTasks() {
   }
 }
 
+function clearFilters() {
+  searchTerm.value = "";
+  statusFilter.value = "all";
+  fetchTasks();
+}
+
 async function createTask(e) {
   e?.preventDefault?.();
   error.value = "";
   loading.value = true;
   try {
     if (!newTask.value.title) throw new Error("Title is required");
-    const { data } = await api.post("/tasks", newTask.value);
-    tasks.value.unshift(data);
+    await api.post("/tasks", newTask.value);
+    await fetchTasks();
     newTask.value = { title: "", description: "", status: "todo" };
   } catch (e2) {
     error.value = e2?.response?.data?.error || e2.message;

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { Op } from "sequelize";
 import { Task } from "../models/Task.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -7,8 +8,23 @@ router.use(requireAuth);
 
 router.get("/", async (req, res, next) => {
   try {
+    const { status, q } = req.query;
+    const where = { userId: req.userId };
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (q) {
+      const term = `%${q}%`;
+      where[Op.or] = [
+        { title: { [Op.like]: term } },
+        { description: { [Op.like]: term } },
+      ];
+    }
+
     const tasks = await Task.findAll({
-      where: { userId: req.userId },
+      where,
       order: [["updatedAt", "DESC"]],
     });
     res.json(tasks);

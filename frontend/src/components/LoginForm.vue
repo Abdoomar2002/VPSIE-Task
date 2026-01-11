@@ -1,14 +1,15 @@
 <template>
   <q-card class="q-pa-md" style="max-width: 500px; margin: 0 auto">
     <q-tabs v-model="tab" class="q-mb-md" dense>
-      <q-tab name="login" label="Login" />
-      <q-tab name="signup" label="Sign Up" />
+      <q-tab name="login" label="Login" icon="login" />
+      <q-tab name="signup" label="Sign Up" icon="person_add" />
     </q-tabs>
     <q-form @submit="submit">
       <q-input
         v-model="email"
         label="Email"
         type="email"
+        prepend-icon="mail"
         class="q-mb-sm"
         :disable="loading"
       />
@@ -16,6 +17,7 @@
         v-model="password"
         label="Password"
         type="password"
+        prepend-icon="lock"
         class="q-mb-sm"
         :disable="loading"
       />
@@ -23,6 +25,7 @@
         color="primary"
         type="submit"
         :label="tab === 'login' ? 'Login' : 'Sign Up'"
+        :icon="tab === 'login' ? 'login' : 'person_add'"
         :loading="loading"
       />
     </q-form>
