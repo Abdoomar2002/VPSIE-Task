@@ -12,6 +12,10 @@ export const Task = sequelize.define(
       type: DataTypes.ENUM("todo", "in_progress", "done"),
       defaultValue: "todo",
     },
+    archived: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   },
   {
     tableName: "tasks",

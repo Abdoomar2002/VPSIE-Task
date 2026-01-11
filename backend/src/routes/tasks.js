@@ -9,7 +9,34 @@ router.use(requireAuth);
 router.get("/", async (req, res, next) => {
   try {
     const { status, q } = req.query;
-    const where = { userId: req.userId };
+    const where = { userId: req.userId, archived: false };
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (q) {
+      const term = `%${q}%`;
+      where[Op.or] = [
+        { title: { [Op.like]: term } },
+        { description: { [Op.like]: term } },
+      ];
+    }
+
+    const tasks = await Task.findAll({
+      where,
+      order: [["updatedAt", "DESC"]],
+    });
+    res.json(tasks);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.get("/archive", async (req, res, next) => {
+  try {
+    const { status, q } = req.query;
+    const where = { userId: req.userId, archived: true };
 
     if (status) {
       where.status = status;
@@ -69,9 +96,10 @@ router.put("/:id", async (req, res, next) => {
 router.delete("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deleted = await Task.destroy({ where: { id, userId: req.userId } });
-    if (!deleted) return res.status(404).json({ error: "Task not found" });
-    res.status(204).end();
+    const task = await Task.findOne({ where: { id, userId: req.userId } });
+    if (!task) return res.status(404).json({ error: "Task not found" });
+    await task.update({ archived: true });
+    res.json(task);
   } catch (e) {
     next(e);
   }

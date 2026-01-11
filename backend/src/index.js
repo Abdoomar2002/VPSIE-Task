@@ -26,7 +26,7 @@ const port = process.env.PORT || 4000;
 async function start() {
   try {
     await sequelize.authenticate();
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     app.listen(port, () => console.log(`API running on :${port}`));
   } catch (e) {
     console.error("Failed to start server:", e?.message || e);

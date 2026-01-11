@@ -149,7 +149,11 @@
             <q-card style="min-width: 350px">
               <q-card-section class="text-h6">Edit Task</q-card-section>
               <q-card-section>
-                <q-input v-model="editItem.title" label="Title" prepend-icon="label" />
+                <q-input
+                  v-model="editItem.title"
+                  label="Title"
+                  prepend-icon="label"
+                />
                 <q-input
                   v-model="editItem.description"
                   label="Description"
@@ -165,11 +169,60 @@
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Cancel" icon="close" v-close-popup />
-                <q-btn color="primary" label="Save" icon="save" @click="updateTask" />
+                <q-btn
+                  color="primary"
+                  label="Save"
+                  icon="save"
+                  @click="updateTask"
+                />
               </q-card-actions>
             </q-card>
           </q-dialog>
         </div>
+
+        <q-separator class="q-my-lg" />
+
+        <q-card>
+          <q-card-section class="row items-center">
+            <div class="text-h6">Archived Tasks</div>
+            <q-space />
+            <q-btn
+              flat
+              icon="inventory_2"
+              label="Load"
+              @click="fetchArchived"
+              :loading="archivedLoading"
+            />
+          </q-card-section>
+          <q-separator />
+          <q-card-section>
+            <div v-if="archivedLoading" class="row justify-center q-pa-lg">
+              <q-spinner size="32px" color="primary" />
+            </div>
+            <div v-else-if="archived.length === 0">
+              <div class="text-grey">No archived tasks yet.</div>
+            </div>
+            <div v-else>
+              <q-table :rows="archived" :columns="columns" row-key="id">
+                <template #body-cell-actions="props">
+                  <q-td align="right">
+                    <q-btn
+                      dense
+                      color="grey"
+                      icon="inventory_2"
+                      label="Archived"
+                      flat
+                      disable
+                    />
+                  </q-td>
+                </template>
+              </q-table>
+            </div>
+            <div v-if="archivedError" class="text-negative q-mt-sm">
+              {{ archivedError }}
+            </div>
+          </q-card-section>
+        </q-card>
       </q-page>
     </q-page-container>
   </q-layout>
@@ -182,9 +235,12 @@ import LoginForm from "./components/LoginForm.vue";
 
 const token = ref(localStorage.getItem("token"));
 const tasks = ref([]);
+const archived = ref([]);
 const loading = ref(false);
+const archivedLoading = ref(false);
 const error = ref("");
 const listError = ref("");
+const archivedError = ref("");
 const searchTerm = ref("");
 const statusFilter = ref("all");
 const newTask = ref({ title: "", description: "", status: "todo" });
@@ -236,6 +292,25 @@ async function fetchTasks() {
   }
 }
 
+async function fetchArchived() {
+  archivedError.value = "";
+  archivedLoading.value = true;
+  try {
+    const params = {};
+    const q = searchTerm.value?.trim();
+    if (q) params.q = q;
+    if (statusFilter.value && statusFilter.value !== "all") {
+      params.status = statusFilter.value;
+    }
+    const { data } = await api.get("/tasks/archive", { params });
+    archived.value = data;
+  } catch (e) {
+    archivedError.value = e?.response?.data?.error || e.message;
+  } finally {
+    archivedLoading.value = false;
+  }
+}
+
 function clearFilters() {
   searchTerm.value = "";
   statusFilter.value = "all";
@@ -281,8 +356,9 @@ async function updateTask() {
 
 async function deleteTask(id) {
   try {
-    await api.delete(`/tasks/${id}`);
+    const { data } = await api.delete(`/tasks/${id}`);
     tasks.value = tasks.value.filter((t) => t.id !== id);
+    if (data) archived.value.unshift(data);
   } catch (e) {
     listError.value = e?.response?.data?.error || e.message;
   }
